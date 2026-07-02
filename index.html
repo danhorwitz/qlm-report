@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Breeze QLM License Report</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f4f6f9; color: #1a1a1a; font-size: 13px;
+  }
+  .wrap { max-width: 1400px; margin: 0 auto; padding-bottom: 40px; }
+
+  /* Header */
+  .header {
+    background: linear-gradient(135deg, #14335c, #1d4d8f);
+    color: #fff; padding: 18px 28px; display: flex;
+    justify-content: space-between; align-items: center;
+  }
+  .header h1 { font-size: 19px; margin: 0; }
+  .header .sub { font-size: 12px; opacity: 0.8; margin-top: 2px; }
+  .header-right { display: flex; align-items: center; gap: 14px; }
+  .header-right .updated { font-size: 12px; opacity: 0.85; }
+  button.refresh {
+    padding: 6px 14px; border: 1px solid rgba(255,255,255,0.4); border-radius: 6px;
+    background: rgba(255,255,255,0.08); color: #fff; cursor: pointer; font-size: 12px;
+  }
+  button.refresh:hover { background: rgba(255,255,255,0.18); }
+
+  /* KPI cards */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1px; background: #e2e6ec; margin: 0 28px; margin-top: -1px; border: 1px solid #e2e6ec; }
+  .card { background: #fff; padding: 12px 16px; }
+  .card .label { font-size: 10.5px; letter-spacing: 0.04em; color: #8a94a3; text-transform: uppercase; font-weight: 600; }
+  .card .num { font-size: 22px; font-weight: 700; margin-top: 3px; line-height: 1.1; }
+  .card.warn .num { color: #b45309; }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 4px; margin: 18px 28px 0; border-bottom: 1px solid #dfe3e9; }
+  .tab { padding: 8px 4px; margin-right: 22px; font-size: 13px; cursor: pointer; border: none; background: none; color: #667; border-bottom: 2px solid transparent; font-weight: 500; }
+  .tab.active { color: #14335c; border-bottom-color: #1d4d8f; font-weight: 700; }
+  .panel { display: none; padding: 16px 28px 0; }
+  .panel.active { display: block; }
+
+  /* Overview charts */
+  .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .chart-box { background: #fff; border: 1px solid #e5e5e7; border-radius: 8px; padding: 12px; height: 260px; }
+  .chart-box h3 { font-size: 12.5px; margin: 0 0 8px; color: #444; }
+
+  /* Filter bar */
+  .filter-bar { display: flex; flex-wrap: wrap; gap: 8px; background: #fff; border: 1px solid #e5e5e7; border-radius: 8px; padding: 10px; margin-bottom: 14px; align-items: center; }
+  .filter-bar input[type="text"], .filter-bar select, .filter-bar input[type="date"] {
+    padding: 6px 8px; border: 1px solid #d7dbe1; border-radius: 6px; font-size: 12.5px; background: #fbfbfc;
+  }
+  .filter-bar input[type="text"] { flex: 1 1 220px; min-width: 180px; }
+  .filter-bar label { font-size: 11.5px; color: #8a94a3; margin-right: 2px; }
+  .filter-bar .fgroup { display: flex; align-items: center; gap: 4px; }
+  .filter-bar button.clear { padding: 6px 12px; border: 1px solid #d7dbe1; border-radius: 6px; background: #fff; font-size: 12px; cursor: pointer; color: #555; }
+  .filter-bar button.clear:hover { background: #f1f2f4; }
+
+  /* Table */
+  .table-box { background: #fff; border: 1px solid #e5e5e7; border-radius: 8px; overflow: hidden; }
+  table.report { width: 100%; border-collapse: collapse; font-size: 12px; }
+  table.report thead th {
+    background: #14335c; color: #fff; text-align: left; padding: 8px 10px;
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.03em; font-weight: 600;
+    position: sticky; top: 0; white-space: nowrap;
+  }
+  table.report tbody td { padding: 6px 10px; border-bottom: 1px solid #eef0f3; white-space: nowrap; }
+  table.report tbody tr:hover { background: #f7f9fc; }
+  table.report tbody tr:nth-child(even) { background: #fafbfd; }
+  table.report tbody tr:nth-child(even):hover { background: #f2f5fa; }
+
+  .badge { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+  .status-active { background: #dcfce7; color: #166534; }
+  .status-disabled { background: #fee2e2; color: #991b1b; }
+
+  .pager { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; font-size: 12px; color: #667; }
+  .pager button { padding: 4px 10px; border: 1px solid #d7dbe1; border-radius: 6px; background: #fff; cursor: pointer; font-size: 12px; }
+  .pager button:disabled { opacity: 0.4; cursor: default; }
+
+  #errorBox { display:none; color:#991b1b; background:#fee2e2; border-radius:8px; padding:12px 16px; font-size:13px; margin: 16px 28px; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="header">
+    <div>
+      <h1>Breeze Creative</h1>
+      <div class="sub">QLM License &amp; Customer Report</div>
+    </div>
+    <div class="header-right">
+      <span class="updated" id="updated">Loading…</span>
+      <button class="refresh" onclick="loadData(true)">↻ Refresh</button>
+    </div>
+  </div>
+
+  <div id="errorBox"></div>
+
+  <div id="content" style="display:none;">
+    <div class="cards" id="cards"></div>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="overview">Overview</button>
+      <button class="tab" data-tab="licenses">Licenses</button>
+      <button class="tab" data-tab="customers">Customers</button>
+    </div>
+
+    <div class="panel active" id="panel-overview">
+      <div class="charts-row">
+        <div class="chart-box"><h3>Licenses by product</h3><canvas id="chartProduct"></canvas></div>
+        <div class="chart-box"><h3>Licenses by model</h3><canvas id="chartModel"></canvas></div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-licenses">
+      <div class="filter-bar">
+        <input type="text" id="lFilterSearch" placeholder="Search name, email, company, key…">
+        <div class="fgroup"><label>Product</label><select id="lFilterProduct"><option value="">All</option></select></div>
+        <div class="fgroup"><label>Model</label><select id="lFilterModel"><option value="">All</option></select></div>
+        <div class="fgroup"><label>Status</label>
+          <select id="lFilterStatus"><option value="">All</option><option value="active">Active</option><option value="disabled">Disabled</option></select>
+        </div>
+        <div class="fgroup"><label>Expiry From</label><input type="date" id="lFilterFrom"></div>
+        <div class="fgroup"><label>To</label><input type="date" id="lFilterTo"></div>
+        <button class="clear" onclick="clearLicenseFilters()">Clear</button>
+      </div>
+      <div class="table-box">
+        <div style="overflow-x:auto;"><table class="report" id="licenseTable"></table></div>
+        <div class="pager" id="licensePager"></div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-customers">
+      <div class="filter-bar">
+        <input type="text" id="cFilterSearch" placeholder="Search name, email, company…">
+        <div class="fgroup"><label>Country</label><select id="cFilterCountry"><option value="">All</option></select></div>
+        <div class="fgroup"><label>Organization</label><select id="cFilterOrg"><option value="">All</option></select></div>
+        <button class="clear" onclick="clearCustomerFilters()">Clear</button>
+      </div>
+      <div class="table-box">
+        <div style="overflow-x:auto;"><table class="report" id="customerTable"></table></div>
+        <div class="pager" id="customerPager"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js"></script>
+<script>
+let productChart, modelChart;
+let allLicenses = [], allCustomers = [];
+const PAGE_SIZE = 20;
+let licensePage = 1, customerPage = 1;
+const PALETTE = ["#4f46e5", "#22c55e", "#f59e0b", "#ef4444", "#06b6d4", "#a855f7", "#0ea5e9", "#84cc16", "#ec4899", "#64748b"];
+
+function colorFor(str) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
+  return PALETTE[h % PALETTE.length];
+}
+function badgeHtml(text, color) {
+  return `<span class="badge" style="background:${color}22; color:${color};">${text}</span>`;
+}
+function isFarFutureOrEmpty(dateStr) {
+  if (!dateStr) return true;
+  const y = parseInt(dateStr.slice(0, 4), 10);
+  return isNaN(y) || y >= 2090;
+}
+function daysUntil(dateStr) {
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return null;
+  return Math.floor((d.getTime() - Date.now()) / 86400000);
+}
+function esc(s) {
+  return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+function fillSelect(sel, values) {
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">All</option>' + values.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join("");
+  sel.value = cur;
+}
+
+async function loadData(forceRefresh) {
+  const errorBox = document.getElementById("errorBox");
+  errorBox.style.display = "none";
+  try {
+    const res = await fetch(forceRefresh ? "/api/refresh" : "/api/licenses");
+    const payload = await res.json();
+    if (!res.ok) throw new Error(payload.error || "Failed to load");
+    render(payload.licenses, payload.generatedAt);
+  } catch (err) {
+    errorBox.style.display = "block";
+    errorBox.textContent = "Couldn't load QLM data: " + err.message;
+    document.getElementById("updated").textContent = "Failed to load data.";
+  }
+}
+
+function render(rawLicenses, generatedAt) {
+  allLicenses = rawLicenses.map(l => ({
+    licenseId: l.LicenseID, activationKey: l.ActivationKey,
+    product: l.ProductName || "(unspecified)",
+    expiry: l.SubscriptionExpiryDate,
+    model: (l.LicenseModel || "unknown").toLowerCase(),
+    disabled: l.Disabled === "true",
+    numLicenses: parseInt(l.NumLicenses || "0", 10),
+    fullName: l.FullName, email: l.Email,
+    company: l.Company || l.CustomerOrganizationName || "(no company)",
+    computerId: l.ComputerID,
+    organizationName: l.OrganizationName || l.CustomerOrganizationName,
+    majorVersion: l.MajorVersion,
+    comment: l.Comment,
+    features: l.Features,
+    activationDate: l.ActivationDate,
+    creationDate: l.CreationDate,
+    customerId: l.CustomerID,
+    organization: l.CustomerOrganizationName,
+    phone: l.Phone,
+    mobile: l.Mobile,
+    country: l.Country,
+    state: l.State,
+    city: l.City,
+    zip: l.Zip,
+    address1: l.Address1,
+    address2: l.Address2,
+    notes: l.Notes,
+  }));
+
+  const byCustomer = new Map();
+  allLicenses.forEach(l => {
+    const key = l.customerId || `${l.email}|${l.fullName}`;
+    if (!byCustomer.has(key)) byCustomer.set(key, l);
+  });
+  allCustomers = Array.from(byCustomer.values()).sort((a, b) => (a.fullName || "").localeCompare(b.fullName || ""));
+
+  document.getElementById("updated").textContent =
+    `Updated ${new Date(generatedAt).toLocaleString()} · ${allLicenses.length} licenses`;
+  document.getElementById("content").style.display = "block";
+
+  renderCards();
+  renderCharts();
+
+  fillSelect(document.getElementById("lFilterProduct"), [...new Set(allLicenses.map(l => l.product))].sort());
+  fillSelect(document.getElementById("lFilterModel"), [...new Set(allLicenses.map(l => l.model))].sort());
+  fillSelect(document.getElementById("cFilterCountry"), [...new Set(allCustomers.map(c => c.country).filter(Boolean))].sort());
+  fillSelect(document.getElementById("cFilterOrg"), [...new Set(allCustomers.map(c => c.organization).filter(Boolean))].sort());
+
+  licensePage = 1; customerPage = 1;
+  renderLicenseTable();
+  renderCustomerTable();
+
+  document.querySelectorAll(".tab").forEach(tab => {
+    tab.onclick = () => {
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+      tab.classList.add("active");
+      document.getElementById("panel-" + tab.dataset.tab).classList.add("active");
+    };
+  });
+
+  ["lFilterSearch", "lFilterProduct", "lFilterModel", "lFilterStatus", "lFilterFrom", "lFilterTo"].forEach(id => {
+    document.getElementById(id).oninput = () => { licensePage = 1; renderLicenseTable(); };
+  });
+  ["cFilterSearch", "cFilterCountry", "cFilterOrg"].forEach(id => {
+    document.getElementById(id).oninput = () => { customerPage = 1; renderCustomerTable(); };
+  });
+}
+
+function renderCards() {
+  const totalSeats = allLicenses.reduce((s, l) => s + (l.numLicenses || 0), 0);
+  const activeCount = allLicenses.filter(l => !l.disabled).length;
+  const companies = new Set(allLicenses.map(l => l.company));
+  const expiringSoon = allLicenses.filter(l => {
+    if (isFarFutureOrEmpty(l.expiry) || l.disabled) return false;
+    const d = daysUntil(l.expiry);
+    return d !== null && d >= 0 && d <= 30;
+  }).length;
+  const cards = [
+    { num: allLicenses.length, label: "Total licenses" },
+    { num: activeCount, label: "Active licenses" },
+    { num: totalSeats, label: "Total seats" },
+    { num: companies.size, label: "Unique companies" },
+    { num: expiringSoon, label: "Expiring in 30 days", warn: expiringSoon > 0 },
+  ];
+  document.getElementById("cards").innerHTML = cards.map(c =>
+    `<div class="card ${c.warn ? "warn" : ""}"><div class="label">${c.label}</div><div class="num">${c.num}</div></div>`
+  ).join("");
+}
+
+function renderCharts() {
+  const byProduct = {}, byModel = {};
+  allLicenses.forEach(l => {
+    byProduct[l.product] = (byProduct[l.product] || 0) + 1;
+    byModel[l.model] = (byModel[l.model] || 0) + 1;
+  });
+  if (productChart) productChart.destroy();
+  if (modelChart) modelChart.destroy();
+  productChart = new Chart(document.getElementById("chartProduct"), {
+    type: "bar",
+    data: { labels: Object.keys(byProduct), datasets: [{ data: Object.values(byProduct), backgroundColor: "#1d4d8f" }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } },
+  });
+  modelChart = new Chart(document.getElementById("chartModel"), {
+    type: "doughnut",
+    data: { labels: Object.keys(byModel), datasets: [{ data: Object.values(byModel), backgroundColor: PALETTE }] },
+    options: { responsive: true, maintainAspectRatio: false },
+  });
+}
+
+function filteredLicenses() {
+  const q = document.getElementById("lFilterSearch").value.toLowerCase();
+  const product = document.getElementById("lFilterProduct").value;
+  const model = document.getElementById("lFilterModel").value;
+  const status = document.getElementById("lFilterStatus").value;
+  const from = document.getElementById("lFilterFrom").value;
+  const to = document.getElementById("lFilterTo").value;
+  return allLicenses.filter(l => {
+    if (q) {
+      const hay = `${l.fullName} ${l.email} ${l.company} ${l.activationKey} ${l.computerId}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    if (product && l.product !== product) return false;
+    if (model && l.model !== model) return false;
+    if (status === "active" && l.disabled) return false;
+    if (status === "disabled" && !l.disabled) return false;
+    if (from && (!l.expiry || l.expiry.slice(0, 10) < from)) return false;
+    if (to && (!l.expiry || l.expiry.slice(0, 10) > to)) return false;
+    return true;
+  });
+}
+function clearLicenseFilters() {
+  ["lFilterSearch"].forEach(id => document.getElementById(id).value = "");
+  ["lFilterProduct", "lFilterModel", "lFilterStatus"].forEach(id => document.getElementById(id).value = "");
+  ["lFilterFrom", "lFilterTo"].forEach(id => document.getElementById(id).value = "");
+  licensePage = 1; renderLicenseTable();
+}
+
+function renderLicenseTable() {
+  const rows = filteredLicenses();
+  const cols = ["Full Name", "Computer ID", "Email", "Company", "Organization Name", "Product Name", "Major Version", "Subscription Expiry Date", "Activation Key", "Comment", "Enabled Features", "Activation Date", "Creation Date"];
+  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  licensePage = Math.min(licensePage, totalPages);
+  const pageRows = rows.slice((licensePage - 1) * PAGE_SIZE, licensePage * PAGE_SIZE);
+
+  let html = "<thead><tr>" + cols.map(c => `<th>${c}</th>`).join("") + "</tr></thead><tbody>";
+  pageRows.forEach(l => {
+    html += "<tr>" +
+      `<td>${esc(l.fullName) || "—"}</td>` +
+      `<td>${esc(l.computerId) || "—"}</td>` +
+      `<td>${esc(l.email) || "—"}</td>` +
+      `<td>${esc(l.company) || "—"}</td>` +
+      `<td>${esc(l.organizationName) || "—"}</td>` +
+      `<td>${badgeHtml(esc(l.product), colorFor(l.product))}</td>` +
+      `<td>${esc(l.majorVersion) || "—"}</td>` +
+      `<td>${isFarFutureOrEmpty(l.expiry) ? "No expiry" : esc(l.expiry.slice(0, 10))}</td>` +
+      `<td>${esc(l.activationKey) || "—"}</td>` +
+      `<td>${esc(l.comment) || "—"}</td>` +
+      `<td>${esc(l.features) || "—"}</td>` +
+      `<td>${l.activationDate ? esc(l.activationDate.slice(0, 10)) : "—"}</td>` +
+      `<td>${l.creationDate ? esc(l.creationDate.slice(0, 10)) : "—"}</td>` +
+      "</tr>";
+  });
+  html += "</tbody>";
+  document.getElementById("licenseTable").innerHTML = html;
+  renderPager("licensePager", licensePage, totalPages, rows.length, (p) => { licensePage = p; renderLicenseTable(); });
+}
+
+function filteredCustomers() {
+  const q = document.getElementById("cFilterSearch").value.toLowerCase();
+  const country = document.getElementById("cFilterCountry").value;
+  const org = document.getElementById("cFilterOrg").value;
+  return allCustomers.filter(c => {
+    if (q) {
+      const hay = `${c.fullName} ${c.email} ${c.company} ${c.organization}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    if (country && c.country !== country) return false;
+    if (org && c.organization !== org) return false;
+    return true;
+  });
+}
+function clearCustomerFilters() {
+  document.getElementById("cFilterSearch").value = "";
+  document.getElementById("cFilterCountry").value = "";
+  document.getElementById("cFilterOrg").value = "";
+  customerPage = 1; renderCustomerTable();
+}
+
+function renderCustomerTable() {
+  const rows = filteredCustomers();
+  const cols = ["#", "Full Name", "Email", "Organization", "Company", "Phone", "Mobile", "Country", "State / Region", "City", "Zip / Postal Code", "Address 1", "Address 2", "Notes"];
+  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  customerPage = Math.min(customerPage, totalPages);
+  const pageRows = rows.slice((customerPage - 1) * PAGE_SIZE, customerPage * PAGE_SIZE);
+
+  let html = "<thead><tr>" + cols.map(c => `<th>${c}</th>`).join("") + "</tr></thead><tbody>";
+  pageRows.forEach((c, i) => {
+    html += "<tr>" +
+      `<td>${(customerPage - 1) * PAGE_SIZE + i + 1}</td>` +
+      `<td>${esc(c.fullName) || "—"}</td>` +
+      `<td>${esc(c.email) || "—"}</td>` +
+      `<td>${esc(c.organization) || "—"}</td>` +
+      `<td>${esc(c.company) || "—"}</td>` +
+      `<td>${esc(c.phone) || "—"}</td>` +
+      `<td>${esc(c.mobile) || "—"}</td>` +
+      `<td>${esc(c.country) || "—"}</td>` +
+      `<td>${esc(c.state) || "—"}</td>` +
+      `<td>${esc(c.city) || "—"}</td>` +
+      `<td>${esc(c.zip) || "—"}</td>` +
+      `<td>${esc(c.address1) || "—"}</td>` +
+      `<td>${esc(c.address2) || "—"}</td>` +
+      `<td>${esc(c.notes) || "—"}</td>` +
+      "</tr>";
+  });
+  html += "</tbody>";
+  document.getElementById("customerTable").innerHTML = html;
+  renderPager("customerPager", customerPage, totalPages, rows.length, (p) => { customerPage = p; renderCustomerTable(); });
+}
+
+function renderPager(elId, page, totalPages, totalRows, onGo) {
+  const el = document.getElementById(elId);
+  el.innerHTML = "";
+  const info = document.createElement("span");
+  info.textContent = `${totalRows} row(s) — page ${page} of ${totalPages}`;
+  const btnWrap = document.createElement("div");
+  const prev = document.createElement("button");
+  prev.textContent = "← Prev"; prev.disabled = page <= 1;
+  prev.onclick = () => onGo(page - 1);
+  const next = document.createElement("button");
+  next.textContent = "Next →"; next.disabled = page >= totalPages;
+  next.style.marginLeft = "6px";
+  next.onclick = () => onGo(page + 1);
+  btnWrap.appendChild(prev); btnWrap.appendChild(next);
+  el.appendChild(info); el.appendChild(btnWrap);
+}
+
+loadData(false);
+</script>
+</body>
+</html>
